@@ -125,17 +125,30 @@ async function viewMenu(id){
   };
   $('#reset').onclick=()=>{if(confirm('¿Borrar todas tus respuestas de este examen?')){store.del('ans:'+id);viewMenu(id)}};
 }
+const fbOn=()=>store.get('fb',true);
+function optState(ex,n,i,a,fb){
+  const m=a[n];let c='';
+  if(m===i)c+=' sel';
+  if(fb&&m!=null){const cor=L.indexOf(ex.key[n-1]);if(i===cor)c+=' correct';else if(m===i)c+=' wrong'}
+  return c;
+}
+function fbText(ex,n,a,fb){
+  if(!fb||a[n]==null)return '';
+  const cor=L.indexOf(ex.key[n-1]);
+  return a[n]===cor?'<div class="fbk ok">✓ ¡Correcto!</div>':`<div class="fbk bad">✗ Incorrecto · la respuesta era <b>${L[cor]}</b></div>`;
+}
 async function viewItem(id,k){
   stopAudio();
   const items=await load(id),it=items[k];
   if(!it){location.hash=`#/e/${id}`;return}
   const ex=EXAMS[id],ans=answers(id),p=part(it.nums[0]);
-  const showQ=store.get('showQ',p!=='A');
+  const showQ=store.get('showQ',p!=='A'),fb=fbOn();
   const qs=it.nums.map(n=>{
     const q=it.q[n]||'';
-    return `<section class="q" data-n="${n}">
+    return `<section class="q ${fb&&ans[n]!=null?'locked':''}" data-n="${n}">
       <h4><span class="num">${n}</span>${showQ?esc(q):'<i>Escucha la pregunta en el audio</i>'}</h4>
-      ${ex.o[n-1].map((o,i)=>`<button class="opt ${ans[n]===i?'sel':''}" data-n="${n}" data-i="${i}"><b>${L[i]}</b><span>${esc(o)}</span></button>`).join('')}
+      ${ex.o[n-1].map((o,i)=>`<button class="opt${optState(ex,n,i,ans,fb)}" data-n="${n}" data-i="${i}"><b>${L[i]}</b><span>${esc(o)}</span></button>`).join('')}
+      <div class="fbwrap">${fbText(ex,n,ans,fb)}</div>
     </section>`;
   }).join('');
   const prev=k>0?`#/e/${id}/i/${k-1}`:`#/e/${id}`,nxt=k<items.length-1?`#/e/${id}/i/${k+1}`:`#/e/${id}`;
@@ -147,10 +160,12 @@ async function viewItem(id,k){
     </div>
     <details class="tipsbox"><summary>Estrategia para ${p==='A'?'Part A':p==='B'?'Part B':'Part C'}</summary><ul>${PART_TIPS[p].map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>
     <label class="toggle"><input type="checkbox" id="showq" ${showQ?'checked':''}> Mostrar texto de la pregunta</label>
+    <label class="toggle"><input type="checkbox" id="fb" ${fb?'checked':''}> Marcar correcta/incorrecta al instante (modo práctica)</label>
     ${qs}
     <nav class="pager"><a class="btn ghost" href="${prev}">‹ ${k>0?'Anterior':'Lista'}</a><a class="btn" href="${nxt}">${k<items.length-1?'Siguiente ›':'Lista'}</a></nav>
   </main>`;
   $('#play').onclick=()=>player.playing?stopAudio():playItem(id,it,p);
+  $('#fb').onchange=e=>{store.set('fb',e.target.checked);viewItem(id,k)};
   $('#showq').onchange=e=>{store.set('showQ',e.target.checked);viewItem(id,k)};
   window.scrollTo(0,0);
 }
@@ -266,8 +281,17 @@ document.addEventListener('input',e=>{if(e.target.id==='gq'){GS.q=e.target.value
 /* ---------- Router ---------- */
 document.addEventListener('click',e=>{
   const b=e.target.closest('.opt');if(!b)return;
-  const id=currentExam();const a=answers(id);a[b.dataset.n]=+b.dataset.i;store.set('ans:'+id,a);
-  b.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b));
+  const id=currentExam(),ex=EXAMS[id],a=answers(id),n=+b.dataset.n,i=+b.dataset.i,fb=fbOn();
+  if(fb&&a[n]!=null)return; // en modo práctica la respuesta queda bloqueada
+  a[n]=i;store.set('ans:'+id,a);
+  const q=b.closest('.q');
+  q.querySelectorAll('.opt').forEach(x=>{x.className='opt'+optState(ex,n,+x.dataset.i,a,fb)});
+  if(fb){
+    q.classList.add('locked');
+    q.querySelector('.fbwrap').innerHTML=fbText(ex,n,a,fb);
+    const good=L[i]===ex.key[n-1];
+    try{navigator.vibrate&&navigator.vibrate(good?25:[60,40,60])}catch{}
+  }
 });
 const currentExam=()=>(location.hash.match(/#\/e\/(\w+)/)||[])[1];
 async function route(){

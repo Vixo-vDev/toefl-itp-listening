@@ -1,4 +1,4 @@
-const V='itp-listening-v2';
+const V='itp-listening-v3';
 const ASSETS=['./','index.html','style.css','app.js','data.js','glossary.js','parse.js','manifest.webmanifest',
 'toefl-listening-transcript.md','toefl-itp-pbt-listening-transcript.md',
 'icons/icon-192.png','icons/icon-512.png','icons/icon-512-maskable.png'];

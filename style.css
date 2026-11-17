@@ -85,3 +85,23 @@ select{font:inherit;padding:6px;border-radius:5px;border:1px solid var(--line)}
 .flash .hint{color:var(--mut);font-size:13px;margin-top:14px}.flash .fe{font-style:italic;margin:16px 0 4px}.flash .ft{color:var(--mut);margin:0;font-size:14px}
 .fbtns{display:flex;gap:10px}.fbtns .btn{flex:1}
 [hidden]{display:none!important}
+
+/* ---- Feedback correcta / incorrecta ---- */
+.opt{position:relative;transition:background .2s,border-color .2s,opacity .25s}
+.opt.correct{background:#e3f4e8;border-color:var(--ok);animation:pop .5s ease}
+.opt.correct b{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.wrong{background:#fdeceb;border-color:var(--bad);animation:shake .45s ease}
+.opt.wrong b{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt.correct::after,.opt.wrong::after{margin-left:auto;font-weight:700;font-size:20px;line-height:1;animation:badge .5s ease both}
+.opt.correct::after{content:'✓';color:var(--ok)}
+.opt.wrong::after{content:'✗';color:var(--bad)}
+.q.locked .opt:not(.correct):not(.wrong){opacity:.5}
+.q.locked .opt{cursor:default}
+.fbk{margin-top:10px;padding:9px 12px;border-radius:8px;font-weight:600;font-size:14px;animation:slide .35s ease}
+.fbk.ok{background:#e3f4e8;color:var(--ok)}
+.fbk.bad{background:#fdeceb;color:var(--bad)}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.045);box-shadow:0 0 0 6px rgba(27,127,59,.18)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(27,127,59,0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@keyframes badge{0%{transform:scale(0) rotate(-40deg);opacity:0}70%{transform:scale(1.35) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.opt.correct,.opt.wrong,.opt::after,.fbk{animation:none}}
